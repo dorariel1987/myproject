@@ -38,6 +38,7 @@ podTemplate(label: 'mypod', containers: [
                sh "apk add --no-cache curl git && curl -sLS cli.openfaas.com | sh"
                sh "curl http://192.168.49.2:32688/index.yaml"
                sh "helm repo add bitnami https://charts.bitnami.com/bitnami"
+               sh "helm uninstall rabbitmq"
                sh "helm upgrade -i rabbitmq bitnami/rabbitmq --set service.type=NodePort"
                sh "helm upgrade -i consumer consumer-chart/."
                sh "helm upgrade -i producer producer-chart/."
