@@ -1,0 +1,14 @@
+apiVersion: v1
+entries:
+  producer:
+  - apiVersion: v2
+    appVersion: "1.0"
+    created: "2021-04-02T15:02:39.366014545+03:00"
+    description: A Helm chart for Kubernetes
+    digest: cf8eda9c3bc29746d59574bd5bea2f03d3a161229459bbe6916c446e20378663
+    name: producer
+    type: application
+    urls:
+    - producer-0.1.0.tgz
+    version: 0.1.0
+generated: "2021-04-02T15:02:39.364841821+03:00"
