@@ -1,5 +1,3 @@
-#!/usr/bin/python2
-
 import pika, logging, sys, argparse, time
 from argparse import RawTextHelpFormatter
 from time import sleep
@@ -17,8 +15,8 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(formatter_class=RawTextHelpFormatter,
                                  description='Run consumer.py',
                                  epilog=examples)
-    parser.add_argument('-p', '--port', action='store', dest='port', help='The port to listen on.', required=False, default='5672')
-    parser.add_argument('-s', '--server', action='store', dest='server', help='The RabbitMQ server.', required=False, default='rabbitmq')
+    parser.add_argument('-p', '--port', action='store', dest='port', help='The port to listen on.')
+    parser.add_argument('-s', '--server', action='store', dest='server', help='The RabbitMQ server.')
 
     args = parser.parse_args()
     if args.port == None:
@@ -32,7 +30,7 @@ if __name__ == '__main__':
     sleep(5)
     logging.basicConfig(level=logging.INFO)
     LOG = logging.getLogger(__name__)
-    credentials = pika.PlainCredentials('my_user', 'my_password')
+    credentials = pika.PlainCredentials('guest', 'guest')
     parameters = pika.ConnectionParameters(args.server,
                                            int(args.port),
                                            '/',
