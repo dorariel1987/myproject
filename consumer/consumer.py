@@ -18,7 +18,7 @@ if __name__ == '__main__':
                                  description='Run consumer.py',
                                  epilog=examples)
     parser.add_argument('-p', '--port', action='store', dest='port', help='The port to listen on.', required=False, default='5672')
-    parser.add_argument('-s', '--server', action='store', dest='server', help='The RabbitMQ server.', required=False, default='my_mq_server')
+    parser.add_argument('-s', '--server', action='store', dest='server', help='The RabbitMQ server.', required=False, default='rabbitmq')
 
     args = parser.parse_args()
     if args.port == None:
