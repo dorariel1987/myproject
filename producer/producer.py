@@ -1,15 +1,16 @@
 import pika, logging, sys, argparse
 from argparse import RawTextHelpFormatter
 from time import sleep
+import datetime, generate_message
 
 if __name__ == '__main__':
-    examples = sys.argv[0] + " -p 5672 -s rabbitmq -m 'Hello' "
+    examples = sys.argv[0] + " -p 5672 -s rabbitmq"
     parser = argparse.ArgumentParser(formatter_class=RawTextHelpFormatter,
                                  description='Run producer.py',
                                  epilog=examples)
     parser.add_argument('-p', '--port', action='store', dest='port', help='The port to listen on.')
     parser.add_argument('-s', '--server', action='store', dest='server', help='The RabbitMQ server.')
-    parser.add_argument('-m', '--message', action='store', dest='message', help='The message to send', required=False, default='Hello')
+    parser.add_argument('-m', '--message', action='store', dest='message', help='The message to send', required=False)
     #parser.add_argument('-r', '--repeat', action='store', dest='repeat', help='Number of times to repeat the message', required=False, default='30')
     parser.add_argument('-t', '--time', action='store', dest='duration', help='Time Duration for sending the messages', required=False, default='20')
 
@@ -22,7 +23,7 @@ if __name__ == '__main__':
         sys.exit(1)
 
     # sleep a few seconds to allow RabbitMQ server to come up
-    sleep(25)
+    sleep(5)
 
     logging.basicConfig(level=logging.INFO)
     LOG = logging.getLogger(__name__)
@@ -33,18 +34,30 @@ if __name__ == '__main__':
                                            credentials)
     connection = pika.BlockingConnection(parameters)
     channel = connection.channel()
-    q = channel.queue_declare('pc')
+    q = channel.queue_declare('pc', durable=True)
     q_name = q.method.queue
+    duration_in_seconds = int(args.duration)
 
-    # Turn on delivery confirmations
-    channel.confirm_delivery()
+    endTime = datetime.datetime.now() + datetime.timedelta(seconds=duration_in_seconds)
 
-    for i in range(0, int(args.repeat)):
-        if channel.basic_publish('', q_name, args.message):
-            LOG.info('Message has been delivered')
+    while True:
+        if datetime.datetime.now() <= endTime:
+            date_now = str(datetime.datetime.now())
+            message = generate_message.produce_message()
+            message_body = '%s sending content : %s ' % (date_now, message)
+            #channel.basic_publish(exchange='', routing_key=q_name, body=message_body)
+            #print('Sending producer message : (%s) at %s' % (message, date_now))
+
+            # Turn on delivery confirmations to rabitmq
+            channel.confirm_delivery()
+            # check delivery
+            if channel.basic_publish(exchange='', routing_key=q_name, body=message_body):
+                date_now = str(datetime.datetime.now())
+                LOG.info(' Producer message (%s) has been delivered at %s' % (message_body, date_now))
+            else:
+                LOG.warning(' Producer message (%s) has NOT been delivered.' % message_body)
         else:
-            LOG.warning('Message NOT delivered')
-
-        sleep(2)
-
-    connection.close()
+            endTime = datetime.datetime.now() + datetime.timedelta(seconds=int(args.duration))
+            LOG.info(' Producer publisher period time %s seconds has been finished , the next period will end at %s ' % (duration_in_seconds, endTime))
+            continue
+        #connection.close()
