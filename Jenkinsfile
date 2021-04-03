@@ -1,3 +1,5 @@
+#!/usr/bin/env groovy
+
 def label = "docker-jenkins-${UUID.randomUUID().toString()}"
 def home = "/home/jenkins"
 def workspace = "${home}/workspace/build-docker-jenkins"
@@ -16,11 +18,11 @@ podTemplate(label: 'mypod', containers: [
   ]) {
     node('mypod') {
 
-		stage('Docker Build') {
+		stage('Docker Build & Push') {
 			container('docker') {
 				echo "cloning from github"
 				git branch: 'dev', url: 'https://github.com/dorariel1987/myproject.git'
-				echo "Building docker image..."
+				echo "Building consumer & producer docker images"
 				sh 'docker build -f consumer/Dockerfile -t dorariel1987/consumer:latest ./consumer/'
 				sh 'docker build -f producer/Dockerfile -t dorariel1987/producer:latest ./producer/'
 	            withDockerRegistry(credentialsId: 'docker') {
@@ -34,9 +36,21 @@ podTemplate(label: 'mypod', containers: [
 
         stage('do some helm work') {
             container('helm') {
-
-               sh "apk add --no-cache curl git && curl -sLS cli.openfaas.com | sh"
-               sh "curl http://192.168.49.2:32688/index.yaml"
+	       echo "adding helm push plugin"
+	       sh "helm plugin install https://github.com/chartmuseum/helm-push.git"
+               sh script: '''#!/bin/bash
+                   export NODE_PORT=$(kubectl get --namespace default -o jsonpath="{.spec.ports[0].nodePort}" services chartmuseum-chartmuseum)
+                   export NODE_IP=$(kubectl get nodes --namespace default -o jsonpath="{.items[0].status.addresses[0].address}")
+                   echo http://$NODE_IP:$NODE_PORT/  
+                   helm repo add chartmuseum http://$NODE_IP:$NODE_PORT
+               ''' 
+	       sh "helm repo update"
+	       echo "packaging helm charts"
+	       sh "helm package consumer-chart/"
+	       sh "helm package producer-chart/"
+	       echo "helm push charts"
+	       sh "helm push --force producer-chart/ chartmuseum"
+	       sh "helm push --force consumer-chart/ chartmuseum"
                sh "helm repo add bitnami https://charts.bitnami.com/bitnami"
                sh "helm uninstall rabbitmq"
                sh "helm upgrade -i rabbitmq bitnami/rabbitmq --set service.type=NodePort"
