@@ -36,14 +36,11 @@ podTemplate(label: 'mypod', containers: [
 
         stage('do some helm work') {
             container('helm') {
+           echo " adding git & curl"
+           sh "apk add --no-cache curl git && curl -sLS cli.openfaas.com | sh"
 	       echo "adding helm push plugin"
 	       sh "helm plugin install https://github.com/chartmuseum/helm-push.git"
-               sh script: '''#!/bin/bash
-                   export NODE_PORT=$(kubectl get --namespace default -o jsonpath="{.spec.ports[0].nodePort}" services chartmuseum-chartmuseum)
-                   export NODE_IP=$(kubectl get nodes --namespace default -o jsonpath="{.items[0].status.addresses[0].address}")
-                   echo http://$NODE_IP:$NODE_PORT/  
-                   helm repo add chartmuseum http://$NODE_IP:$NODE_PORT
-               ''' 
+           sh "helm repo add chartmuseum http://192.168.49.2:32688"
 	       sh "helm repo update"
 	       echo "packaging helm charts"
 	       sh "helm package consumer-chart/"
