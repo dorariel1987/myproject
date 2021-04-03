@@ -53,7 +53,7 @@ podTemplate(label: 'mypod', containers: [
 	       sh "helm push --force consumer-chart/ chartmuseum"
                sh "helm repo add bitnami https://charts.bitnami.com/bitnami"
                sh "helm uninstall rabbitmq"
-               sh "helm upgrade -i rabbitmq bitnami/rabbitmq --set service.type=NodePort"
+               sh "helm install rabbitmq bitnami/rabbitmq --set service.type=NodePort"
                sh "helm upgrade -i consumer consumer-chart/."
                sh "helm upgrade -i producer producer-chart/."
             }
